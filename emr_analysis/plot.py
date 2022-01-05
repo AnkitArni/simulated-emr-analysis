@@ -1,5 +1,6 @@
 import re as _re
 import webbrowser as _wb
+from datetime import datetime as _dt
 import pandas as _pd
 import numpy as _np
 import plotly.express as _px
@@ -7,11 +8,21 @@ import dash as _dash
 from dash import dcc as _dcc
 from dash import html as _html
 
+def _df_check(dfs: dict):
+    required_dfs = {'AdmissionsDiagnosesCorePopulatedTable',
+                    'AdmissionsCorePopulatedTable',
+                    'LabsCorePopulatedTable',
+                    'PatientCorePopulatedTable'}
+    if dfs.keys() != required_dfs:
+        raise Exception('Dataframes are incorrectly formatted, missing dictionaried datframes:' + str(required_dfs - dfs.keys()) + '\nPlease use load_data from the data module to load in custom data')
 
 def summary() -> None:
     print('Hello there')
     
 def ind_summary(patient_id: str, dfs: dict, browser: bool = False):
+    _df_check(dfs)
+    
+    # Get and format the core individual information
     core_info = dfs["PatientCorePopulatedTable"]
     cols = core_info.columns
     col_dict = {x:_re.sub("Patient|(\\w)([A-Z])", "\\1 \\2", x).strip() for x in cols}
@@ -22,7 +33,20 @@ def ind_summary(patient_id: str, dfs: dict, browser: bool = False):
     core_info = core_info.melt()
     core_info.columns = ["Patient_Info","values"]
     
+    # Format the patients birthday so it is separated between day and time
+    patient_birth = _dt.strptime(
+        core_info["values"].loc[core_info["Patient_Info"] == "Date Of Birth"].values[0],'%Y-%m-%d %H:%M:%S.%f')
+    patient_bday = patient_birth.date()
+    patient_btime = patient_birth.time()
     
+    # Get age of person at time of request
+    current_date = _dt.today().date()
+    core_info = core_info.append(_pd.DataFrame([["Birthday", patient_bday.strftime("%d/%m/%Y")],
+                                                ["Time of Birth", patient_btime],
+                                                ["Age (as of "+str(current_date.strftime("%d/%m/%Y"))+")", (current_date.year-patient_bday.year) - ((current_date.month, current_date.day) < (patient_bday.month, patient_bday.day))]],
+                                 columns=core_info.columns),
+                                ignore_index=True)
+    # Make the plots for the lab information
     lab_info = dfs["LabsCorePopulatedTable"]
     lab_info = lab_info[lab_info['PatientID'] == patient_id]
     lab_info = lab_info.assign(LabDateTime=_pd.to_datetime(lab_info['LabDateTime']).dt.date)
