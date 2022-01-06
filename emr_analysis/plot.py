@@ -19,7 +19,19 @@ def _df_check(dfs: dict):
 def summary() -> None:
     print('Hello there')
     
-def ind_summary(patient_id: str, dfs: dict, browser: bool = False):
+def ind_summary(patient_id: str, dfs: dict, browser: bool = False, port: int = 8050):
+    '''
+    Parameters
+    ----------
+    patient_id: str
+    dfs: dict
+    browser: bool
+    port: int
+    
+    Returns
+    -------
+    
+    '''
     _df_check(dfs)
     
     # Get and format the core individual information
@@ -102,8 +114,8 @@ def ind_summary(patient_id: str, dfs: dict, browser: bool = False):
             
         app.layout = _html.Div(children=html_out)
         
-        _wb.open_new('http://127.0.0.1:8050/')
-        app.run_server()
+        _wb.open_new('http://127.0.0.1:'+str(port)+'/')
+        app.run_server(port=port)
         
         return None
     
