@@ -13,7 +13,7 @@ class SummaryInformation():
         self.dfs = dfs
 
     def admission_summary(self, from_date=None, to_date=None):
-
+        
         from_date= _dt.datetime.strptime(from_date, '%Y-%m-%d')
         to_date= _dt.datetime.strptime(to_date, '%Y-%m-%d')
 
@@ -47,44 +47,70 @@ class SummaryInformation():
 
         return fig, ax
 
-    def lab_summary(self, filter=['LabName', 'LabUnits'], dates=[None, None]):
-        """Returns a dataframe of summary statistics for labtests in the dataset. Optionally the user can specify a date range for the dataset.
+    def lab_summary(self, from_date=None, to_date=None):
+        """[summary]
 
         Args:
-            self.dfs ([pd.DataFrame]): The dataset to perform summary statistics on.
-            filter (list, optional): Filters what the table will be grouped by. Defaults to ['LabName', 'LabUnits'].
-            dates (list, optional): Specifies a date range for the dataset. Defaults to [None, None].
+            from_date ([type], optional): [description]. Defaults to None.
+            to_date ([type], optional): [description]. Defaults to None.
 
         Returns:
-            [pd.DataFrame]: A dataframe of the summary statistics.
+            [type]: [description]
         """
-        self.dfs['LabsCorePopulatedTable'] = self.dfs['LabsCorePopulatedTable'].set_index(['LabDateTime'])
-        details = self.dfs['LabsCorePopulatedTable'].loc[dates].groupby(['LabName', 'LabUnits'])[['LabValue']].describe()
+        self.dfs['LabsCorePopulatedTable']['LabDateTime'] = _pd.to_datetime(self.dfs['LabsCorePopulatedTable']['LabDateTime'])
 
+        from_date= _dt.datetime.strptime(from_date, '%Y-%m-%d')
+        to_date= _dt.datetime.strptime(to_date, '%Y-%m-%d')
+
+        if from_date is None:
+            from_date = self.dfs['LabsCorePopulatedTable']['LabDateTime'].min()
+        if to_date is None:
+            to_date = self.dfs['LabsCorePopulatedTable']['LabDateTime'].max()
+
+        details = self.dfs['LabsCorePopulatedTable'][(self.dfs['LabsCorePopulatedTable']['LabDateTime']> from_date) & (self.dfs['LabsCorePopulatedTable']['LabDateTime']< to_date)].groupby(['LabName', 'LabUnits'])[['LabValue']].describe()
 
         return details
 
 
     def lab_plot(self):
-        """A visualsation of the 'lab_summary()' function.
-
-        Args:
-            self.dfs ([pd.DataFrame]): The dataset to visualise the data from.
-
-        Returns:
-            [matplotlib]: box plots of lab summary statstics. 
+        """Displays a histogram for each lab test seprated by lab type.
         """
-        labs = set(list(self.dfs['LabsCorePopulatedTable']['LabName']))
-        fig, ax = plt.subplots(7, 5, figsize=(28,30))
-        i, j = 0, 0
-        for lab in labs:
-            if i == 7:
-                j += 1
-                i = 0
-            self.dfs['LabsCorePopulatedTable'][self.dfs['LabsCorePopulatedTable']['LabName'] == lab][['LabValue']].plot(kind='box', grid=True, ax=ax[i, j]).set_title(lab)
-            i += 1
+        for lab_type in {x.split(':')[0] for x in self.dfs['LabsCorePopulatedTable']['LabName']}:
+    
+            lab_fig_data = self.dfs['LabsCorePopulatedTable'][self.dfs['LabsCorePopulatedTable']['LabName'].str.contains(lab_type)]
+            
+            labs = set(list(lab_fig_data['LabName']))
 
-        return fig, ax
+            n = len(labs)
+            j = 5
+            i = round(n/j + .49)
+
+            fig, ax = plt.subplots(i, j, figsize=(28,i*j))
+
+            if i != 1:
+
+                row, col = 0, 0
+                for lab in labs:
+                    if col == j:
+                        col = 0
+                        row += 1
+                    lab_fig_data[lab_fig_data['LabName'] == lab][['LabValue']].plot(kind='hist', grid=True, ax=ax[row, col], xlabel='Test', ylabel='Test').set_title(lab)
+                    col += 1
+
+                if n % j != 0:
+                    for k in range(5- (n % j)):
+                        fig.delaxes(ax[i-1,j-1-k])
+
+            else:
+                
+                for i, lab in enumerate(labs):
+                    lab_fig_data[lab_fig_data['LabName'] == lab][['LabValue']].plot(kind='hist', grid=True, ax=ax[i], xlabel='Test', ylabel='Test').set_title(lab)
+
+                if n % j != 0:
+                    for k in range(5- (n % j)):
+                        fig.delaxes(ax[j-1-k])
+
+            fig.show()
 
 
     def personal_plot(self):
