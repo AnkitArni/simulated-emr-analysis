@@ -1,5 +1,5 @@
-# Jupyter notebooks FOR NOW
-*.ipynb
+# Jupyter notebooks
+# *.ipynb
 
 # Apple Artifact
 .DS_Store

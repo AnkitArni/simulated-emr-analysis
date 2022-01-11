@@ -2,9 +2,9 @@ name: emr_data_analysis
 channels:
   - conda-forge
 dependencies:
-  - dash=2.0.0
   - dash-core-components=2.0.0
   - dash-html-components=2.0.0
+  - dash=2.0.0
   - joblib=1.1.0
   - jupyterlab=3.2.4
   - matplotlib=3.5.0
@@ -15,5 +15,7 @@ dependencies:
   - python=3.8.12
   - scipy=1.7.3
   - statsmodels=0.13.1
+  - twine=3.7.1
+  - wheel=0.37.1
   - pip:
     - python-magic-bin==0.4.14
