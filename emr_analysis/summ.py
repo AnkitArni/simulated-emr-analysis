@@ -5,19 +5,31 @@ import matplotlib.pyplot as plt
 
 
 class SummaryInformation():
-    """Display summary statistics in tabular form and plots of relevent data.
+    """Contains functions to display relevent general summary statistics.
 
     """
     def __init__(self, dfs):
 
         self.dfs = dfs
 
+        self.dfs['admissions']['AdmissionStartDate'] = _pd.to_datetime(self.dfs['admissions']['AdmissionStartDate'])
+        self.dfs['admissions']['AdmissionEndDate'] = _pd.to_datetime(self.dfs['admissions']['AdmissionEndDate'])
+
+        self.dfs['labs']['LabDateTime'] = _pd.to_datetime(self.dfs['labs']['LabDateTime'])
+
     def admission_plot(self, from_date=None, to_date=None):
+        """Creates a figure containing time series information on admissions.
 
-        dates = ['AdmissionStartDate', 'AdmissionEndDate']
+        Args:
+            from_date (str, optional): 
+                The date for the plot to begin from (yyyy-mm-dd). Defaults to the minimum date.
+            to_date (str, optional): 
+                The date for the plot to end (yyyy-mm-dd). Defaults to the maximum date.
 
-        for date in dates:
-            self.dfs['admissions'][date] = _pd.to_datetime(self.dfs['admissions'][date])
+        Returns:
+            fig : matplotlib.figure.Figure
+            ax : matplotlib.axes.Axes
+        """
 
         if from_date is None:
             from_date = self.dfs['admissions']['AdmissionStartDate'].min()
@@ -47,7 +59,12 @@ class SummaryInformation():
 
 
     def admission_time_diff_summary(self):
+        """Creates a histogram figure containing time spent in admission.
 
+        Returns:
+            fig : matplotlib.figure.Figure
+            ax : matplotlib.axes.Axes
+        """
         fig = plt.figure(figsize=(12,3))
         ax = fig.add_subplot()
 
@@ -61,17 +78,17 @@ class SummaryInformation():
         return fig, ax
 
     def lab_summary(self, from_date=None, to_date=None):
-        """[summary]
+        """Creates a table contain summary statistics of lab values for each lab type.
 
         Args:
-            from_date ([type], optional): [description]. Defaults to None.
-            to_date ([type], optional): [description]. Defaults to None.
+            from_date (str, optional): 
+                The date for the plots to begin from (yyyy-mm-dd). Defaults to None (the minimum date).
+            to_date (str, optional): 
+                The date for the plots to end (yyyy-mm-dd). Defaults to None (the maximum date).
 
         Returns:
-            [type]: [description]
+            pandas.DataFrame
         """
-        self.dfs['labs']['LabDateTime'] = _pd.to_datetime(self.dfs['labs']['LabDateTime'])
-
         if from_date is None:
             from_date = self.dfs['labs']['LabDateTime'].min()
         else:
@@ -88,7 +105,11 @@ class SummaryInformation():
 
 
     def lab_plot(self):
-        """Displays a histogram for each lab test seprated by lab type.
+        """Creates a dictioonary cointaing histogram figures of labvalues for each lab type, with general lab type keys.
+
+        Returns:
+            dict{lab type:(fig, ax)}:
+                 where 'fig' is a matplotlib.figure.Figure and 'ax' is a matplotlib.axes.Axes.
         """
         plots = {}
 
@@ -133,13 +154,11 @@ class SummaryInformation():
 
 
     def personal_plot(self):
-        """Displays several barcharts of patient personal information (e.g. gender or race).
-
-        Args:
-            self.dfs ([pd.DataFrame]): The dataset to visualise the data from.
+        """Creates bar chart figures for each categorical variable in 'patients' data.
 
         Returns:
-            [matplotlib]: plots of patients personal information. 
+            fig : matplotlib.figure.Figure
+            ax : matplotlib.axes.Axes
         """
         categorical_features = ['PatientGender', 'PatientRace', 'PatientMaritalStatus', 'PatientLanguage']
         fig, ax = plt.subplots(1, len(categorical_features), figsize=(10,8))
