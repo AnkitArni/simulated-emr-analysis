@@ -408,6 +408,8 @@ class QuickSearch:
                         marital)
         self.filter_str(filtered_dfs, 'patients', 'PatientLanguage',
                         language)
+        self.filter_str(filtered_dfs, 'diagnosis', 'PrimaryDiagnosisCode',
+                        diag_code, is_list=True)
         self.filter_num(filtered_dfs, 'patients', 'PatientDateOfBirth',
                         min(birthday), 'min', date=True)
         self.filter_num(filtered_dfs, 'patients', 'PatientDateOfBirth',
@@ -415,12 +417,8 @@ class QuickSearch:
         for df_name in ['diagnosis', 'admissions', 'labs']:
             self.filter_num(filtered_dfs, df_name, 'AdmissionID',
                             admittance, 'min')
-
-        # Temporary way to filter diagnosis codes
-        if diag_code is not None:
-            filtered_dfs['diagnosis'] = filtered_dfs['diagnosis'][filtered_dfs['diagnosis']['PrimaryDiagnosisCode'].isin(diag_code)]
+        
         self.update_remaining_tables(filtered_dfs, 'diagnosis')
-
         self.update_remaining_tables(filtered_dfs, 'patients')
 
         df_order = ['patients', 'diagnosis', 'admissions', 'labs']
@@ -502,7 +500,7 @@ class QuickSearch:
             value (int):
                 Value to be compared
             minmax (str, optional):
-                Comparison request, can be 'min', 'max' or exact.
+                Comparison request, can be 'min', 'max' or 'exact'.
                 Defaults to 'min'.
             date (bool, optional):
                 Set True if a datetime column is being put it.
@@ -512,20 +510,21 @@ class QuickSearch:
             None
 
         """
-
-        if date:
-            filter_col = _pd.DatetimeIndex(dfs[key][column]).year
-        else:
-            filter_col = dfs[key][column]
-        if minmax == 'min':
-            dfs[key] = dfs[key][filter_col >= value]
-        elif minmax == 'max':
-            dfs[key] = dfs[key][filter_col <= value]
-        elif minmax == 'exact':
-            dfs[key] = dfs[key][filter_col == value]
+        
+        if value is not None:
+            if date:
+                filter_col = _pd.DatetimeIndex(dfs[key][column]).year
+            else:
+                filter_col = dfs[key][column]
+            if minmax == 'min':
+                dfs[key] = dfs[key][filter_col >= value]
+            elif minmax == 'max':
+                dfs[key] = dfs[key][filter_col <= value]
+            elif minmax == 'exact':
+                dfs[key] = dfs[key][filter_col == value]
 
     def filter_str(self, dfs: _pd.DataFrame, key: str, column: str,
-                   text: str):
+                   text, is_list: bool=False):
         """
         Filters the given dataframe given a string input
         Updates the dataframe in place
@@ -537,13 +536,19 @@ class QuickSearch:
                 Key for dataframe wanted to filter
             column (str):
                 String of column name to filter
-            text (str):
-                String to be compared
+            text (str or list):
+                String(s) to be compared
                 If the text given is 'Unknown' it won't filter anything
+            is_list (bool):
+                Uses pandas 'isin' instead if True.
+                Defaults to False.
 
         Returns:
             None
 
         """
         if text is not None and text != 'Unknown':
-            dfs[key] = dfs[key][dfs[key][column] == text]
+            if is_list:
+                dfs[key] = dfs[key][dfs[key][column].isin(text)]
+            else:
+                dfs[key] = dfs[key][dfs[key][column] == text]
