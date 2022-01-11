@@ -1,7 +1,7 @@
 import pandas as _pd
 import numpy as _np
 import datetime as _dt
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as _plt
 
 
 class SummaryInformation():
@@ -21,7 +21,7 @@ class SummaryInformation():
         self.dfs['labs']['LabDateTime'] = _pd.to_datetime(
             self.dfs['labs']['LabDateTime'])
 
-    def admission_plot(self, from_date=None, to_date=None):
+    def admissions_plot(self, from_date=None, to_date=None):
         """Creates a figure containing time series information on admissions.
 
         Args:
@@ -51,7 +51,7 @@ class SummaryInformation():
             self.dfs['admissions']['AdmissionStartDate'].min().year
         diff = ((to_date.year - from_date.year) / max_diff) * 10 + 5
 
-        fig = plt.figure(figsize=(diff, 3))
+        fig = _plt.figure(figsize=(diff, 3))
         ax = fig.add_subplot()
 
         (self.dfs['admissions'][
@@ -68,14 +68,14 @@ class SummaryInformation():
 
         return fig, ax
 
-    def admission_time_diff_summary(self):
+    def admission_time_plot(self):
         """Creates a histogram figure containing time spent in admission.
 
         Returns:
             fig : matplotlib.figure.Figure
             ax : matplotlib.axes.Axes
         """
-        fig = plt.figure(figsize=(12, 3))
+        fig = _plt.figure(figsize=(12, 3))
         ax = fig.add_subplot()
 
         self.dfs['admissions']['AdmissionDiff'] = \
@@ -145,7 +145,7 @@ class SummaryInformation():
             j = 4
             i = round(n / j + .49)
 
-            fig, ax = plt.subplots(i, j, figsize=(28, i * j))
+            fig, ax = _plt.subplots(i, j, figsize=(28, i * j))
 
             if i != 1:
 
@@ -192,7 +192,7 @@ class SummaryInformation():
             'PatientRace',
             'PatientMaritalStatus',
             'PatientLanguage']
-        fig, ax = plt.subplots(1, len(categorical_features), figsize=(10, 8))
+        fig, ax = _plt.subplots(1, len(categorical_features), figsize=(10, 8))
         for i, categorical_feature in enumerate(
                 self.dfs['patients'][categorical_features]):
             self.dfs['patients'][categorical_feature].value_counts().plot(
