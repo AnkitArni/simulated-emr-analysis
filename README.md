@@ -2,7 +2,7 @@
 
 A simple analysis and visualisation package for simulated Electronic Medical Records (EMR) data. This project is for an assignment and is currently available on [TestPyPI](https://test.pypi.org/project/emr-analysis/)
 
-[![Read the Docs](https://readthedocs.org/projects/pip/badge/?version=latest)](https://simulated-emr-analysis.readthedocs.io/en/latest/)
+[![Read the Docs](https://readthedocs.org/projects/pip/badge/?version=latest)](https://emr-analysis.readthedocs.io/en/latest/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/release/python-380+/)
 
