@@ -1,28 +1,26 @@
 import os as _os
 import re as _re
-import sys as _sys
 import pandas as _pd
 import typing as _ty
 import logging as _lg
 import tkinter as _tk
-import warnings as _wr
-import traceback as _tb
-from pathlib import PurePath as _pp
+from sys import stdout as _stdout
 from zipfile import ZipFile as _zf
 from magic import from_file as _magic_from_file
 from tkinter.filedialog import askopenfilename as _tk_filedialog
 
 _BASE_PATH = _os.path.realpath(__file__)
-_lg.basicConfig(stream = _sys.stdout, level = _lg.INFO)
+_lg.basicConfig(stream = _stdout, level = _lg.INFO)
 _LOGGER = _lg.Logger(name = __file__)
-
 
 class Loader:
     EXAMPLE_ZIP_PATH = _os.path.join(
         _os.path.dirname(_BASE_PATH),
         'examples',
         '100-Patients.zip')
+    EMR_FILE_ENC = 'utf-8-sig'
     LOAD_TYPES = {'example', 'zip', 'text'}
+    EMR_FILE_TYPES = {'text/plain', 'application/zip'}
     EMR_PATTERNS = {
         'admissions': {
             'FILENAME': _re.compile(r"^[Aa]dmissions[Cc]ore.+\.[Tt][Xx][Tt]"),
@@ -30,7 +28,7 @@ class Loader:
         },
         'diagnosis': {
             'FILENAME': _re.compile(r"^[Aa]dmissions[Dd]iagnoses[Cc]ore.+\.[Tt][Xx][Tt]"),
-            'HEADER': _re.compile(r"^[Aa]dmissions[Dd]iagnoses[Cc]ore.+\.[Tt][Xx][Tt]"),
+            'HEADER': _re.compile(r"^[Pp]atient[Ii][Dd].+[Dd]iagnosis[Cc]ode.*"),
         },
         'labs': {
             'FILENAME': _re.compile(r"^[Ll]abs[Cc]ore.+\.[Tt][Xx][Tt]"),
@@ -40,20 +38,6 @@ class Loader:
             'FILENAME': _re.compile(r"^[Pp]atient[Cc]ore.+\.[Tt][Xx][Tt]"),
             'HEADER': _re.compile(r"^[Pp]atient[Ii][Dd].+[Pp]atient(?:[Dd]ate[Oo]f[Bb]irth|[Dd][Oo][Bb]).*")
         }
-    }
-    EMR_FILE_ENC = 'utf-8-sig'
-    EMR_FILE_TYPES = {'text/plain': '.txt', 'application/zip': '.zip'}
-    EMR_FILENAME_TYPES = {
-        'admissions': _re.compile(r"^[Aa]dmissions[Cc]ore.+\.[Tt][Xx][Tt]"),
-        'diagnosis': _re.compile(r"^[Aa]dmissions[Dd]iagnoses[Cc]ore.+\.[Tt][Xx][Tt]"),
-        'labs': _re.compile(r"^[Ll]abs[Cc]ore.+\.[Tt][Xx][Tt]"),
-        'patients': _re.compile(r"^[Pp]atient[Cc]ore.+\.[Tt][Xx][Tt]")
-    }
-    EMR_CONTENT_TYPES = {
-        'admissions': _re.compile(r"^[Pp]atient[Ii][Dd].+[Aa]dmission[Ss]tart[Dd]ate.*"),
-        'diagnosis': _re.compile(r"^[Pp]atient[Ii][Dd].+[Dd]iagnosis[Cc]ode.*"),
-        'labs': _re.compile(r"^[Pp]atient[Ii][Dd].+[Ll]ab[Nn]ame.*"),
-        'patients': _re.compile(r"^[Pp]atient[Ii][Dd].+[Pp]atient(?:[Dd]ate[Oo]f[Bb]irth|[Dd][Oo][Bb]).*")
     }
 
     def __call__(
@@ -88,6 +72,7 @@ class Loader:
                 2. A dictionary with content type as keys and DataFrame as values.
         """
         _LOGGER.debug('__call__: Start')
+        load_type = load_type.lower()
         if load_type in __class__.LOAD_TYPES:
             if load_type == 'example':
                 input_file_path = __class__.EXAMPLE_ZIP_PATH
@@ -102,7 +87,7 @@ class Loader:
                             input_file_path = self.__get_file_from_dialog(load_type)
                             if input_file_path != '':
                                 input_file_type = self.__check_file_mimetype(input_file_path)
-                                if input_file_type in __class__.EMR_FILE_TYPES.keys():
+                                if input_file_type in __class__.EMR_FILE_TYPES:
                                     valid_input = True
                             else:
                                 _LOGGER.warning(
@@ -130,7 +115,7 @@ class Loader:
                                 elif _os.path.isfile(input_file_path):
                                     input_file_type = self.__check_file_mimetype(
                                         input_file_path)
-                                    if input_file_type in __class__.EMR_FILE_TYPES.keys():
+                                    if input_file_type in __class__.EMR_FILE_TYPES:
                                         _LOGGER.debug(
                                             f'input_file_path = {input_file_path}')
                                         valid_input = True
@@ -246,8 +231,8 @@ class Loader:
                 zipfile_contents = zipfile_pointer.infolist()
                 for zipfile_entry in zipfile_contents:
                     filename_type = ''
-                    for fn_type, pattern in __class__.EMR_FILENAME_TYPES.items():
-                        if bool(_re.match(pattern, zipfile_entry.filename)):
+                    for fn_type, pattern in __class__.EMR_PATTERNS.items():
+                        if bool(_re.match(pattern['FILENAME'], zipfile_entry.filename)):
                             filename_type = fn_type
                     if filename_type != '':
                         with zipfile_pointer.open(
@@ -313,11 +298,6 @@ class Loader:
         """
         _LOGGER.debug('extract_data_from_textfile: Start')
         header = self.__check_textfile_header(file_pointer)
-        # for line in file_pointer:
-        #     if len(line.strip()) > 0:
-        #         header = f'{line.strip().decode(__class__.EMR_FILE_ENC)}'
-        #         break
-        # file_pointer.seek(0)
         if header is not None and header != '':
             data = _pd.DataFrame()
             try:
@@ -348,8 +328,8 @@ class Loader:
         """
         content_type = ''
         if header is not None and header != '':
-            for c_type, pattern in __class__.EMR_CONTENT_TYPES.items():
-                if bool(_re.match(pattern, header)):
+            for c_type, pattern in __class__.EMR_PATTERNS.items():
+                if bool(_re.match(pattern['HEADER'], header)):
                     content_type = c_type
                     break
         return content_type
