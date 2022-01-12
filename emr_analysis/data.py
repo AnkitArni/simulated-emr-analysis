@@ -14,6 +14,9 @@ _lg.basicConfig(stream = _stdout, level = _lg.INFO)
 _LOGGER = _lg.Logger(name = __file__)
 
 class Loader:
+    """Loads data from a text or zip file.
+    Input files must match the supported EMR content type patterns, for both filename & data header.
+    """
     EXAMPLE_ZIP_PATH = _os.path.join(
         _os.path.dirname(_BASE_PATH),
         'examples',
