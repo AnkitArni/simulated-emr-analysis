@@ -1,8 +1,7 @@
-import pandas as _pd
-import numpy as _np
 import datetime as _dt
 import matplotlib.pyplot as _plt
-
+import numpy as _np
+import pandas as _pd
 
 class SummaryInformation():
     """Contains functions to display relevent general summary statistics.
