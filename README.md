@@ -31,6 +31,7 @@ Uri Kartoun [[1]](#1) attempted to tackle the second issue by creating simulated
     * LabsCorePopulatedTable.txt
     * PatientCorePopulatedTable.txt
 2. The dependency module `python-magic-bin` is basically a Python wrapper around libmagic, please refer to their [PyPI page](https://pypi.org/project/python-magic-bin/) if any issues are encountered.
+3. This project was developed with the assumption that the data headers will be similar to the example. As such, the modules will not work if there are type-case inconsistencies (i.e., if the data header is in uppercase, and the user tries to access it in lowercase).
 
 <hr>
 
